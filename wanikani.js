@@ -4,47 +4,51 @@ var scheduledAlert;
 var lastCheck = new Date().getTime() - 60000;
 var apiKey = "";
 
-chrome.storage.sync.get("apiKey", function(data) {
-	if (data.apiKey.length > 0) {
-		apiKey = data.apiKey;
+run();
 
-		// Initialize
-		check();
+function run() {
+	chrome.storage.sync.get("apiKey", function(data) {
+		if (data.apiKey && data.apiKey.length > 0) {
+			apiKey = data.apiKey;
 
-		// Check every 10 minutes
-		setInterval(check, 60000 * checkInterval);
+			// Initialize
+			check();
 
-		// Go to reviews when icon is clicked
-		chrome.pageAction.onClicked.addListener(function(tab) {
-			chrome.tabs.create({
-				url: "https://www.wanikani.com/review/session"
+			// Check every 10 minutes
+			setInterval(check, 60000 * checkInterval);
+
+			// Go to reviews when icon is clicked
+			chrome.pageAction.onClicked.addListener(function(tab) {
+				chrome.tabs.create({
+					url: "https://www.wanikani.com/review/session"
+				});
 			});
-		});
 
-		// Show on all tabs
-		chrome.tabs.onActivated.addListener(function(tab) {
-			show();
-		});
-		chrome.tabs.onCreated.addListener(function(tab) {
-			show();
-		});
-		chrome.tabs.onUpdated.addListener(function(tab) {
-			show();
+			// Show on all tabs
+			chrome.tabs.onActivated.addListener(function(tab) {
+				show();
+			});
+			chrome.tabs.onCreated.addListener(function(tab) {
+				show();
+			});
+			chrome.tabs.onUpdated.addListener(function(tab) {
+				show();
 
-			chrome.tabs.query({
-				"active": true,
-				"currentWindow": true
-			}, function(tabs) {
-				if (typeof tabs[0] !== "undefined" && typeof tabs[0].url !== "undefined") {
-					var url = tabs[0].url.toLowerCase();
-					if (url === "https://www.wanikani.com/review" || url === "http://www.wanikani.com/review" || url === "https://www.wanikani.com/review/" || url === "http://www.wanikani.com/review/") {
-						check();
+				chrome.tabs.query({
+					"active": true,
+					"currentWindow": true
+				}, function(tabs) {
+					if (typeof tabs[0] !== "undefined" && typeof tabs[0].url !== "undefined") {
+						var url = tabs[0].url.toLowerCase();
+						if (url === "https://www.wanikani.com/review" || url === "http://www.wanikani.com/review" || url === "https://www.wanikani.com/review/" || url === "http://www.wanikani.com/review/") {
+							check();
+						}
 					}
-				}
+				});
 			});
-		});
-	}
-});
+		}
+	});
+}
 
 // Show icon
 function show() {

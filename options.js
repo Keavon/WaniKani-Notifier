@@ -17,6 +17,7 @@ $(function() {
 					}, function() {
 						alert("Signed into " + data.user_information.username + " successfully.");
 						window.close();
+						chrome.extension.getBackgroundPage().run();
 					});
 				}
 			});
