@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "WaniKani Review Notifier",
-	"version": "1.0",
+	"version": "1.0.0",
 	"options_page": "options.html",
 
 	"description": "Creates an icon when a review is ready on WaniKani",
