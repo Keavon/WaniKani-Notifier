@@ -46,6 +46,8 @@ function run() {
 					}
 				});
 			});
+		} else {
+			chrome.tabs.create({ 'url': 'chrome://extensions/?options=' + chrome.runtime.id });
 		}
 	});
 }
