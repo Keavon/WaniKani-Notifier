@@ -8,3 +8,6 @@ Get a notification icon in Chrome when you have radicals, kanji, or vocabulary t
 
 ### Contributing
 [Issues](https://github.com/Keavon/WaniKani-Notifier/issues) and [pull requests](https://github.com/Keavon/Multiple-List-Duplicate-Removal-Tool/pulls) are welcome!
+
+### Forum Thread
+[This is the thread](https://www.wanikani.com/chat/api-and-third-party-apps/9536) pertaining to this extension on the WaniKani forums.
