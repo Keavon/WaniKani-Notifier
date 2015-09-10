@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "WaniKani Review Notifier",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"options_page": "options.html",
 
 	"description": "Creates an icon when a review is ready on WaniKani",
@@ -19,7 +19,7 @@
 
 	"author": "Keavon",
 	"background": {
-		"scripts": ["jquery-2.1.3.min.js", "wanikani.js"]
+		"scripts": ["wanikani.js"]
 	},
 
 	"permissions": [

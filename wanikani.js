@@ -3,13 +3,17 @@ var reviewIsAvailable = false;
 var scheduledAlert;
 var lastCheck = new Date().getTime() - 60000;
 var apiKey = "";
+var minReviews;
 
 run();
 
 function run() {
-	chrome.storage.sync.get("apiKey", function(data) {
-		if (data.apiKey && data.apiKey.length > 0) {
+	hide();
+	
+	chrome.storage.sync.get(["apiKey", "minReviews"], function(data) {
+		if (data.apiKey && data.apiKey.length > 0 && data.minReviews && data.minReviews > 0) {
 			apiKey = data.apiKey;
+			minReviews = data.minReviews;
 
 			// Initialize
 			check();
@@ -72,22 +76,24 @@ function hide() {
 
 // Query the WaniKani API
 function queryAPI(path, callback) {
-	$.ajax({
-		"url": path,
-		"cache": false,
-		"dataType": "json"
-	}).done(callback).fail(function() {
-		console.error("Error accessing WaniKani API.");
-	});
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState === XMLHttpRequest.DONE && xmlhttp.status === 200) {
+			callback(JSON.parse(xmlhttp.responseText));
+		}
+	};
+	xmlhttp.open("GET", path, true);
+	xmlhttp.send();
 }
 
+// Check the API and update the times and internal data
 function check() {
 	if (lastCheck < new Date().getTime() - 10000) {
 		lastCheck = new Date().getTime();
 		queryAPI("https://www.wanikani.com/api/user/" + apiKey + "/study-queue", function(data) {
 			if (data.error) {
 				alert(data.error.message);
-			} else if (data.requested_information.reviews_available > 0) {
+			} else if (data.requested_information.reviews_available >= minReviews) {
 				reviewIsAvailable = true;
 				show();
 			} else if (data.requested_information.reviews_available === 0) {
