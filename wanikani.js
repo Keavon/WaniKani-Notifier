@@ -1,107 +1,86 @@
-var checkInterval = 10;
-var reviewIsAvailable = false;
-var scheduledAlert;
 var lastCheck = new Date().getTime() - 60000;
-var apiKey = "";
+var scheduledAlert;
+var apiKey;
 var minReviews;
+var error = "";
+var urlToVisit = "";
 
-run();
+chrome.storage.sync.get(["apiKey", "minReviews"], loadSettings);
 
-function run() {
-	hide();
-	
-	chrome.storage.sync.get(["apiKey", "minReviews"], function(data) {
-		if (data.apiKey && data.apiKey.length > 0 && data.minReviews && data.minReviews > 0) {
-			apiKey = data.apiKey;
-			minReviews = data.minReviews;
-
-			// Initialize
-			check();
-
-			// Check every 10 minutes
-			setInterval(check, 60000 * checkInterval);
-
-			// Go to reviews when icon is clicked
-			chrome.pageAction.onClicked.addListener(function(tab) {
-				chrome.tabs.create({
-					url: "https://www.wanikani.com/review/session"
-				});
-			});
-
-			// Show on all tabs
-			chrome.tabs.onActivated.addListener(function(tab) {
-				show();
-			});
-			chrome.tabs.onCreated.addListener(function(tab) {
-				show();
-			});
-			chrome.tabs.onUpdated.addListener(function(tab) {
-				show();
-
-				chrome.tabs.query({
-					"active": true,
-					"currentWindow": true
-				}, function(tabs) {
-					if (typeof tabs[0] !== "undefined" && typeof tabs[0].url !== "undefined") {
-						var url = tabs[0].url.toLowerCase();
-						if (url === "https://www.wanikani.com/review" || url === "http://www.wanikani.com/review" || url === "https://www.wanikani.com/review/" || url === "http://www.wanikani.com/review/") {
-							check();
-						}
-					}
-				});
-			});
-		} else {
-			chrome.tabs.create({ 'url': 'chrome://extensions/?options=' + chrome.runtime.id });
-		}
-	});
-}
-
-// Show icon
-function show() {
-	if (reviewIsAvailable) {
-		chrome.tabs.getSelected(null, function(tab) {
-			chrome.pageAction.show(tab.id);
+// Initialize extension
+function loadSettings(data) {
+	if (data.apiKey && data.apiKey.length > 0 && data.minReviews && data.minReviews > 0) {
+		apiKey = data.apiKey;
+		minReviews = data.minReviews;
+		
+		// Perform initial status check
+		check();
+		
+		// Check every 10 minutes
+		setInterval(check, 600000);
+		
+		// Go to reviews when icon is clicked
+		chrome.browserAction.onClicked.addListener(function(tab) {
+			if (error) alert("Error:\n" + error);
+			else chrome.tabs.create({ url: urlToVisit });
 		});
+		
+		// Re-check after returning to the reviews completed screen
+		chrome.tabs.onUpdated.addListener(function(tab) {
+			chrome.tabs.query({ "active": true, "currentWindow": true }, function(tabs) {
+				if (typeof tabs[0] !== "undefined" && typeof tabs[0].url !== "undefined") {
+					var url = tabs[0].url.toLowerCase();
+					if (url === "https://www.wanikani.com/review" || url === "http://www.wanikani.com/review" || url === "https://www.wanikani.com/review/" || url === "http://www.wanikani.com/review/") {
+						check();
+					}
+				}
+			});
+		});
+	} else {
+		// Prompt for API key if missing
+		chrome.tabs.create({ "url": "chrome://extensions/?options=" + chrome.runtime.id });
 	}
-}
-
-// Hide icon
-function hide() {
-	chrome.tabs.query({}, function(tabs) {
-		for (var tab in tabs) {
-			chrome.pageAction.hide(tabs[tab].id);
-		}
-	});
-}
-
-// Query the WaniKani API
-function queryAPI(path, callback) {
-	var xmlhttp = new XMLHttpRequest();
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState === XMLHttpRequest.DONE && xmlhttp.status === 200) {
-			callback(JSON.parse(xmlhttp.responseText));
-		}
-	};
-	xmlhttp.open("GET", path, true);
-	xmlhttp.send();
 }
 
 // Check the API and update the times and internal data
 function check() {
 	if (lastCheck < new Date().getTime() - 10000) {
 		lastCheck = new Date().getTime();
-		queryAPI("https://www.wanikani.com/api/user/" + apiKey + "/study-queue", function(data) {
+		
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState !== XMLHttpRequest.DONE || xmlhttp.status !== 200) return;
+			
+			var data  = JSON.parse(xmlhttp.responseText);
+			
+			error = "";
 			if (data.error) {
-				alert(data.error.message);
+				// API error
+				error = data.error.message;
+				chrome.browserAction.setIcon({ path: "icons/grey.png" });
+				chrome.browserAction.setTitle({ title: "Error:\n" + error });
 			} else if (data.requested_information.reviews_available >= minReviews) {
-				reviewIsAvailable = true;
-				show();
-			} else if (data.requested_information.reviews_available === 0) {
-				reviewIsAvailable = false;
-				hide();
+				// Review is available
+				urlToVisit = "https://www.wanikani.com/review/session";
+				chrome.browserAction.setIcon({ path: "icons/red.png" });
+				chrome.browserAction.setTitle({ title: "Begin WaniKani review" });
+			} else if (data.requested_information.lessons_available > 0) {
+				// Lesson is available
+				urlToVisit = "https://www.wanikani.com/lesson/session";
+				chrome.browserAction.setIcon({ path: "icons/orange.png" });
+				chrome.browserAction.setTitle({ title: "Begin WaniKani lesson" });
+			} else {
+				// Waiting
+				urlToVisit = "https://www.wanikani.com/dashboard";
+				chrome.browserAction.setIcon({ path: "icons/black.png" });
+				chrome.browserAction.setTitle({ title: "Open WaniKani dashboard" });
+				
+				// Schedule next check
 				clearTimeout(scheduledAlert);
 				scheduledAlert = setTimeout(check, data.requested_information.next_review_date * 1000 - new Date() / 1000 + 60000);
 			}
-		});
+		};
+		xmlhttp.open("GET", "https://www.wanikani.com/api/user/" + apiKey + "/study-queue", true);
+		xmlhttp.send();
 	}
 }

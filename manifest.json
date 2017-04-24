@@ -1,30 +1,23 @@
 {
 	"manifest_version": 2,
 	"name": "WaniKani Review Notifier",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"options_page": "options.html",
-
-	"description": "Creates an icon when a review is ready on WaniKani",
+	"description": "Displays a colored icon when reviews and lessons are ready on WaniKani",
 	"icons": {
-		"128": "icons/128.png"
+		"128": "icons/red.png"
 	},
-
-	"page_action": {
+	"browser_action": {
 		"default_icon": {
-			"19": "icons/19.png",
-			"38": "icons/38.png"
-		},
-		"default_title": "Open WaniKani Review Session"
+			"128": "icons/black.png"
+		}
 	},
-
-	"author": "Keavon",
+	"author": "Keavon Chambers",
 	"background": {
 		"scripts": ["wanikani.js"]
 	},
-
 	"permissions": [
 		"background",
-		"tabs",
 		"storage",
 		"https://www.wanikani.com/api/*"
 	]

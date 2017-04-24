@@ -34,7 +34,7 @@ function saved(event) {
 	if (minimumElement.value.length > 0 && parseInt(minimumElement.value) > 0) {
 		chrome.storage.sync.set({ "minReviews": parseInt(minimumElement.value) });
 	} else {
-		alertElement.innerHTML = "Minimum reviews must positive.";
+		alertElement.innerHTML = "Minimum reviews must positive";
 		alertElement.className = "shown";
 		clearTimeouts();
 		timeouts.push(setTimeout(function() { alertElement.className = ""; minimumElement.value = 1; }, 5000));
@@ -44,7 +44,7 @@ function saved(event) {
 	
 	// Alert about empty API key input
 	if (keyElement.value.length <= 0) {
-		alertElement.innerHTML = "Missing API key.";
+		alertElement.innerHTML = "Missing API key";
 		alertElement.className = "shown";
 		clearTimeouts();
 		timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
@@ -55,14 +55,20 @@ function saved(event) {
 	// Verify and save updated minimum value
 	queryAPI("https://www.wanikani.com/api/user/" + keyElement.value + "/study-queue", function(data) {
 		if (data.error) {
-			alertElement.innerHTML = data.error.message;
+			// Remove period from message string for consistency
+			var msgNoPeriod = data.error.message;
+			if (msgNoPeriod.substr(-1) === ".") {
+				msgNoPeriod = msgNoPeriod.slice(0, -1);
+			}
+			
+			alertElement.innerHTML = msgNoPeriod;
 			alertElement.className = "shown";
 			clearTimeouts();
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5500));
 		} else {
 			chrome.storage.sync.set({ "apiKey": keyElement.value }, function() {
-				alertElement.innerHTML = "Settings saved for " + data.user_information.username + ".";
+				alertElement.innerHTML = "Settings saved for " + data.user_information.username;
 				alertElement.className = "shown";
 				clearTimeouts();
 				timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
@@ -92,7 +98,7 @@ function queryAPI(path, callback) {
 			if (xmlhttp.status === 200) {
 				callback(JSON.parse(xmlhttp.responseText));
 			} else {
-				alertElement.innerHTML = "Error accessing WaniKani API.";
+				alertElement.innerHTML = "Error accessing WaniKani API";
 				alertElement.className = "shown";
 				clearTimeouts();
 				timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));

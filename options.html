@@ -1,13 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<title>WaniKani Notifier Settings</title>
 	<link href="options.css" rel="stylesheet" type="text/css">
-	<script type="text/javascript" src="jquery-2.1.3.min.js"></script>
 	<script type="text/javascript" src="options.js"></script>
 </head>
 <body>
-	<img src="icons/128.png" alt="WaniKani Logo" />
+	<img src="icons/red.png" alt="WaniKani" />
 	<div class="spacer s50"></div>
 	<div>
 		<label for="key">WaniKani API key:</label>
@@ -18,10 +17,10 @@
 		<div id="alert"></div>
 	</div>
 	<div>
-		<label for="minimum">Minimum reviews before icon appears:</label>
+		<label for="minimum">Minimum reviews for icon to display red:</label>
 		<input id="minimum" type="number" min="1" />
 	</div>
 	<div class="spacer s25"></div>
-	<button id="save" onclick="saveSettings();">Save</button>
+	<button id="save">Save</button>
 </body>
 </html>
