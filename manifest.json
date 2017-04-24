@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "WaniKani Review Notifier",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"options_page": "options.html",
 	"description": "Displays a colored icon when reviews and lessons are ready on WaniKani",
 	"icons": {
@@ -9,7 +9,7 @@
 	},
 	"browser_action": {
 		"default_icon": {
-			"128": "icons/black.png"
+			"128": "icons/grey.png"
 		}
 	},
 	"author": "Keavon Chambers",

@@ -1,5 +1,6 @@
 var alertElement, minimumElement, keyElement, saveElement;
 var timeouts = [];
+var notNewlyInstalled;
 
 document.addEventListener("DOMContentLoaded", function() {
 	// Get DOM elements
@@ -12,10 +13,14 @@ document.addEventListener("DOMContentLoaded", function() {
 	saveElement.addEventListener("click", saved);
 	
 	// Load saved values into page
-	chrome.storage.sync.get(["apiKey", "minReviews"], loadStorage);
+	chrome.storage.sync.get(["apiKey", "minReviews", "notNewlyInstalled"], loadStorage);
 });
 
 function loadStorage(data) {
+	// Save newly installed state
+	notNewlyInstalled = data.notNewlyInstalled;
+	chrome.storage.sync.set({ "notNewlyInstalled": true });
+	
 	// Load API key into page
 	if (data.apiKey && data.apiKey.length > 0) {
 		keyElement.value = data.apiKey;
@@ -74,11 +79,9 @@ function saved(event) {
 				timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
 				timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5500));
 				
-				timeouts.push(setTimeout(function() {
-					window.close();
-					chrome.extension.getBackgroundPage().location.reload();
-					chrome.extension.getBackgroundPage().run();
-				}, 2500));
+				chrome.extension.getBackgroundPage().run();
+				
+				if (!notNewlyInstalled) timeouts.push(setTimeout(window.close, 2500));
 			});
 		}
 	});

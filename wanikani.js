@@ -3,12 +3,22 @@ var scheduledAlert;
 var apiKey;
 var minReviews;
 var error = "";
-var urlToVisit = "";
+var urlToVisit = "chrome://extensions/?options=" + chrome.runtime.id;
 
-chrome.storage.sync.get(["apiKey", "minReviews"], loadSettings);
+run();
+
+function run() {
+	chrome.storage.sync.get(["apiKey", "minReviews", "notNewlyInstalled"], loadSettings);
+}
 
 // Initialize extension
 function loadSettings(data) {
+	// Go to reviews when icon is clicked
+	chrome.browserAction.onClicked.addListener(function(tab) {
+		if (error) alert("Error:\n" + error);
+		else chrome.tabs.create({ url: urlToVisit });
+	});
+	
 	if (data.apiKey && data.apiKey.length > 0 && data.minReviews && data.minReviews > 0) {
 		apiKey = data.apiKey;
 		minReviews = data.minReviews;
@@ -18,12 +28,6 @@ function loadSettings(data) {
 		
 		// Check every 10 minutes
 		setInterval(check, 600000);
-		
-		// Go to reviews when icon is clicked
-		chrome.browserAction.onClicked.addListener(function(tab) {
-			if (error) alert("Error:\n" + error);
-			else chrome.tabs.create({ url: urlToVisit });
-		});
 		
 		// Re-check after returning to the reviews completed screen
 		chrome.tabs.onUpdated.addListener(function(tab) {
@@ -36,7 +40,7 @@ function loadSettings(data) {
 				}
 			});
 		});
-	} else {
+	} else if (!data.notNewlyInstalled) {
 		// Prompt for API key if missing
 		chrome.tabs.create({ "url": "chrome://extensions/?options=" + chrome.runtime.id });
 	}
