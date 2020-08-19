@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	saveElement.addEventListener("click", saved);
 	
 	// Load saved values into page
-	chrome.storage.sync.get(["apiKey", "minReviews", "notNewlyInstalled"], loadStorage);
+	chrome.storage.sync.get(["apiKeyV2", "minReviews", "notNewlyInstalled"], loadStorage);
 });
 
 function loadStorage(data) {
@@ -22,8 +22,8 @@ function loadStorage(data) {
 	chrome.storage.sync.set({ "notNewlyInstalled": true });
 	
 	// Load API key into page
-	if (data.apiKey && data.apiKey.length > 0) {
-		keyElement.value = data.apiKey;
+	if (data.apiKeyV2 && data.apiKeyV2.length > 0) {
+		keyElement.value = data.apiKeyV2;
 	}
 	
 	// Load minimum reviews into page
@@ -58,7 +58,8 @@ function saved(event) {
 	}
 	
 	// Verify and save updated minimum value
-	queryAPI("https://www.wanikani.com/api/user/" + keyElement.value + "/study-queue", function(data) {
+	queryAPI("https://api.wanikani.com/v2/user", function(data) {
+		console.log(data);
 		if (data.error) {
 			// Remove period from message string for consistency
 			var msgNoPeriod = data.error.message;
@@ -72,8 +73,8 @@ function saved(event) {
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5500));
 		} else {
-			chrome.storage.sync.set({ "apiKey": keyElement.value }, function() {
-				alertElement.innerHTML = "Settings saved for " + data.user_information.username;
+			chrome.storage.sync.set({ "apiKeyV2": keyElement.value }, function() {
+				alertElement.innerHTML = "Settings saved for " + data.data.username;
 				alertElement.className = "shown";
 				clearTimeouts();
 				timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
@@ -110,5 +111,6 @@ function queryAPI(path, callback) {
 		}
 	};
 	xmlhttp.open("GET", path, true);
+	xmlhttp.setRequestHeader('Authorization', 'Bearer ' + keyElement.value);
 	xmlhttp.send();
 }

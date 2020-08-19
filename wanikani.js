@@ -1,6 +1,6 @@
 var lastCheck = new Date().getTime() - 60000;
 var scheduledAlert;
-var apiKey;
+var apiKeyV2;
 var minReviews;
 var error = "";
 var urlToVisit = "chrome://extensions/?options=" + chrome.runtime.id;
@@ -8,7 +8,7 @@ var urlToVisit = "chrome://extensions/?options=" + chrome.runtime.id;
 run();
 
 function run() {
-	chrome.storage.sync.get(["apiKey", "minReviews", "notNewlyInstalled"], loadSettings);
+	chrome.storage.sync.get(["apiKeyV2", "minReviews", "notNewlyInstalled"], loadSettings);
 }
 
 // Initialize extension
@@ -19,8 +19,8 @@ function loadSettings(data) {
 		else chrome.tabs.create({ url: urlToVisit });
 	});
 	
-	if (data.apiKey && data.apiKey.length > 0 && data.minReviews && data.minReviews > 0) {
-		apiKey = data.apiKey;
+	if (data.apiKeyV2 && data.apiKeyV2.length > 0 && data.minReviews && data.minReviews > 0) {
+		apiKeyV2 = data.apiKeyV2;
 		minReviews = data.minReviews;
 		
 		// Perform initial status check
@@ -50,25 +50,43 @@ function loadSettings(data) {
 function check() {
 	if (lastCheck < new Date().getTime() - 10000) {
 		lastCheck = new Date().getTime();
+		const requestOptions = {
+			headers: {
+			  'Authorization': 'Bearer '+apiKeyV2,
+			},
+		  };
+		var errors = [];
+		var index = [["Lessons","https://api.wanikani.com/v2/assignments?immediately_available_for_lessons=true"], 
+					["Reviews", "https://api.wanikani.com/v2/assignments?immediately_available_for_review=true"],
+					["Summary", "https://api.wanikani.com/v2/summary"]],
+			promises = index.map(i => fetch(i[1], requestOptions).then(response => {
+				if (response.ok) {
+				  return response.json()
+				} else {
+				  return Promise.reject(i[0] + ": " + response.status + " " + response.statusText)
+				}
+			  }).catch(function(error) {
+				errors.push(error);
+			}));
 		
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState !== XMLHttpRequest.DONE || xmlhttp.status !== 200) return;
-			
-			var data  = JSON.parse(xmlhttp.responseText);
-			
-			error = "";
-			if (data.error) {
+		var dict = [];
+		
+		Promise.all(promises)
+		.then(ps => Promise.all(ps.map(p => p))) // p.json() also returns a promise
+		.then(js => js.forEach((j,i) => (dict[i] = j)))
+		.then(x => {
+			if (errors.length > 0) {
 				// API error
-				error = data.error.message;
+				error = errors.join('\n');
+				urlToVisit = "https://www.wanikani.com/dashboard";
 				chrome.browserAction.setIcon({ path: "icons/grey.png" });
 				chrome.browserAction.setTitle({ title: "Error:\n" + error });
-			} else if (data.requested_information.reviews_available >= minReviews) {
+			} else if (dict[1].total_count >= minReviews) {
 				// Review is available
 				urlToVisit = "https://www.wanikani.com/review/session";
 				chrome.browserAction.setIcon({ path: "icons/red.png" });
 				chrome.browserAction.setTitle({ title: "Begin WaniKani review" });
-			} else if (data.requested_information.lessons_available > 0) {
+			} else if (dict[0].total_count > 0) {
 				// Lesson is available
 				urlToVisit = "https://www.wanikani.com/lesson/session";
 				chrome.browserAction.setIcon({ path: "icons/orange.png" });
@@ -81,10 +99,9 @@ function check() {
 				
 				// Schedule next check
 				clearTimeout(scheduledAlert);
-				scheduledAlert = setTimeout(check, data.requested_information.next_review_date * 1000 - new Date() / 1000 + 60000);
+				var nextReviewDate = Date.parse(dict[2].data.next_reviews_at) - new Date().getTime();			
+				scheduledAlert = setTimeout(check, nextReviewDate); //use nextReviewDate
 			}
-		};
-		xmlhttp.open("GET", "https://www.wanikani.com/api/user/" + apiKey + "/study-queue", true);
-		xmlhttp.send();
+		});
 	}
 }
