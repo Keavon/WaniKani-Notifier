@@ -1,6 +1,6 @@
 var lastCheck = new Date().getTime() - 60000;
 var scheduledAlert;
-var apiKeyV2;
+var apiKey;
 var minReviews;
 var error = "";
 var urlToVisit = "chrome://extensions/?options=" + chrome.runtime.id;
@@ -8,7 +8,7 @@ var urlToVisit = "chrome://extensions/?options=" + chrome.runtime.id;
 run();
 
 function run() {
-	chrome.storage.sync.get(["apiKeyV2", "minReviews", "notNewlyInstalled"], loadSettings);
+	chrome.storage.sync.get(["apiKey", "minReviews", "notNewlyInstalled"], loadSettings);
 }
 
 // Initialize extension
@@ -19,8 +19,8 @@ function loadSettings(data) {
 		else chrome.tabs.create({ url: urlToVisit });
 	});
 	
-	if (data.apiKeyV2 && data.apiKeyV2.length > 0 && data.minReviews && data.minReviews > 0) {
-		apiKeyV2 = data.apiKeyV2;
+	if (data.apiKey && data.apiKey.length > 0 && data.minReviews && data.minReviews > 0) {
+		apiKey = data.apiKey;
 		minReviews = data.minReviews;
 		
 		// Perform initial status check
@@ -52,7 +52,7 @@ function check() {
 		lastCheck = new Date().getTime();
 		const requestOptions = {
 			headers: {
-			  'Authorization': 'Bearer '+apiKeyV2,
+			  'Authorization': 'Bearer '+apiKey,
 			},
 		  };
 		var errors = [];

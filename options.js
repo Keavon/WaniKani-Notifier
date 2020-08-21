@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	saveElement.addEventListener("click", saved);
 	
 	// Load saved values into page
-	chrome.storage.sync.get(["apiKeyV2", "minReviews", "notNewlyInstalled"], loadStorage);
+	chrome.storage.sync.get(["apiKey", "minReviews", "notNewlyInstalled"], loadStorage);
 });
 
 function loadStorage(data) {
@@ -22,8 +22,8 @@ function loadStorage(data) {
 	chrome.storage.sync.set({ "notNewlyInstalled": true });
 	
 	// Load API key into page
-	if (data.apiKeyV2 && data.apiKeyV2.length > 0) {
-		keyElement.value = data.apiKeyV2;
+	if (data.apiKey && data.apiKey.length > 0) {
+		keyElement.value = data.apiKey;
 	}
 	
 	// Load minimum reviews into page
@@ -59,7 +59,6 @@ function saved(event) {
 	
 	// Verify and save updated minimum value
 	queryAPI("https://api.wanikani.com/v2/user", function(data) {
-		console.log(data);
 		if (data.error) {
 			// Remove period from message string for consistency
 			var msgNoPeriod = data.error.message;
@@ -73,7 +72,7 @@ function saved(event) {
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5500));
 		} else {
-			chrome.storage.sync.set({ "apiKeyV2": keyElement.value }, function() {
+			chrome.storage.sync.set({ "apiKey": keyElement.value }, function() {
 				alertElement.innerHTML = "Settings saved for " + data.data.username;
 				alertElement.className = "shown";
 				clearTimeouts();
