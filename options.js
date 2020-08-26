@@ -58,7 +58,7 @@ function saved(event) {
 	}
 	
 	// Verify and save updated minimum value
-	queryAPI("https://www.wanikani.com/api/user/" + keyElement.value + "/study-queue", function(data) {
+	queryAPI("https://api.wanikani.com/v2/user", function(data) {
 		if (data.error) {
 			// Remove period from message string for consistency
 			var msgNoPeriod = data.error.message;
@@ -73,7 +73,7 @@ function saved(event) {
 			timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5500));
 		} else {
 			chrome.storage.sync.set({ "apiKey": keyElement.value }, function() {
-				alertElement.innerHTML = "Settings saved for " + data.user_information.username;
+				alertElement.innerHTML = "Settings saved for " + data.data.username;
 				alertElement.className = "shown";
 				clearTimeouts();
 				timeouts.push(setTimeout(function() { alertElement.className = ""; }, 5000));
@@ -110,5 +110,6 @@ function queryAPI(path, callback) {
 		}
 	};
 	xmlhttp.open("GET", path, true);
+	xmlhttp.setRequestHeader('Authorization', 'Bearer ' + keyElement.value);
 	xmlhttp.send();
 }
